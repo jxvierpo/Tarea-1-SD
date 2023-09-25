@@ -15,4 +15,4 @@ RUN pip install -r requirements.txt
 
 
 #CMD ["sh", "-c", "while true; do sleep 1000; done"]
-CMD ["python", "search_memcached.py"]
+CMD ["python", "memcached_ring.py"]

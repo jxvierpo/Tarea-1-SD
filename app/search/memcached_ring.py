@@ -1,22 +1,28 @@
+import uhashring
 import memcache
 import json
 import time
 import numpy as np
 from find_car_by_id import find_car_by_id
 
-
 class CacheClient:
     def __init__(self):
         # Configura el cliente Memcached con los nombres de host de los contenedores
-        self.mc = memcache.Client(["memcached-master:11211", "memcached-slave:11211"])
+        nodes = ["memcached-master:11211", "memcached-slave:11211"]
+        self.ring = uhashring.HashRing(nodes)
+        
+    def get_mc_client(self, key):
+        server = self.ring.get_node(key)
+        return memcache.Client([server])
 
     def get(self, key, simulated=False):
         start_time = time.time()  # Inicio del temporizador
 
-        
+        # Obtiene el cliente Memcached correcto basado en el hashing consistente
+        mc = self.get_mc_client(key)
 
         # Realiza la operación de obtener en el cliente Memcached
-        value = self.mc.get(key)
+        value = mc.get(key)
 
         if value:
             print("Key found in Memcached.")
@@ -35,7 +41,7 @@ class CacheClient:
             if value:
                 print("Key found in JSON. Adding to Memcached...")
                 # Almacena el valor en Memcached para futuras consultas
-                self.mc.set(key, value)
+                mc.set(key, value)
                 elapsed_time = time.time() - start_time  # Calcula el tiempo transcurrido
                 if simulated:
                     # Añade el retraso al tiempo
@@ -47,7 +53,7 @@ class CacheClient:
                 print(f"Time taken: {elapsed_time:.5f} seconds")
                 print("Key not found.")
                 return None
-            
+
     def simulate_searches(self, n_searches=100):
         keys_to_search = [f"{i}" for i in np.random.randint(1, 101, n_searches)]
 
@@ -74,10 +80,10 @@ class CacheClient:
         time_saved = time_without_cache - time_with_cache
         print(f"\nTime saved thanks to cache: {time_saved:.2f} seconds")
         print(f"Number of times JSON lookup was avoided: {avoided_json_lookups}")
-        
+
+# La implementación del resto de los métodos y el código principal permanecerían esencialmente iguales.
 
 if __name__ == '__main__':
-
     client = CacheClient()
 
     while True:

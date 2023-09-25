@@ -18,6 +18,7 @@ services:
   memcached-search:
     build:
       context: ./app/search
+      dockerfile: Dockerfile
       
     container_name: memcached-search
     stdin_open: true
