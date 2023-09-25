@@ -56,6 +56,7 @@ class CacheClient:
 
     def simulate_searches(self, n_searches=100):
         keys_to_search = [f"{i}" for i in np.random.randint(1, 101, n_searches)]
+        search_times = []  # Lista para almacenar los tiempos individuales de búsqueda
 
         # Métricas
         time_without_cache = 0
@@ -72,14 +73,22 @@ class CacheClient:
             time_without_cache += 3 + 0.001  # Estimado de tiempo de búsqueda en JSON
             self.get(key)
             elapsed_time = time.time() - start_time
+            search_times.append(elapsed_time)
             time_with_cache += elapsed_time
 
             if elapsed_time < 1:
                 avoided_json_lookups += 1
 
         time_saved = time_without_cache - time_with_cache
+        average_search_time = sum(search_times) / len(search_times) if search_times else 0  # Calcula el tiempo medio de búsqueda
+        cache_hit_rate = (avoided_json_lookups / n_searches) * 100  # Tasa de aciertos de caché
+        std_dev_search_time = np.std(search_times) if search_times else 0  # Desviación estándar del tiempo de búsqueda
+
         print(f"\nTime saved thanks to cache: {time_saved:.2f} seconds")
         print(f"Number of times JSON lookup was avoided: {avoided_json_lookups}")
+        print(f"Average search time: {average_search_time:.5f} seconds")
+        print(f"Cache hit rate: {cache_hit_rate:.2f}%")
+        print(f"Standard deviation of search time: {std_dev_search_time:.5f} seconds")
 
 # La implementación del resto de los métodos y el código principal permanecerían esencialmente iguales.
 
